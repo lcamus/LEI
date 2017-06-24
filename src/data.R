@@ -2,11 +2,10 @@
 # 23/06/2017
 
 #options(java.parameters = "-Xmx3072m")
+# library(XLConnect)
 
 library(xml2)
-library(XLConnect)
 library(openxlsx)
-
 
 fill <- function(s, tag, path) {
  
@@ -241,14 +240,32 @@ openxlsx::write.xlsx(dfXml, paste0(fData,".xlsx"))
 # Get APU:
 
 fRef <- "data/referentiel-adm._centrale-odac-apul-asso-resident-20170328.xlsx"
-# wb <- loadWorkbook(fRef)
-# df <- readWorksheet(wb, sheet = "Adm_Centrale", header = TRUE)
-sn <- getSheetNames(fRef)
+fRef.lei <- paste0(regmatches(fRef,regexpr("^.+(?=\\.xlsx$)",fRef,perl=T)),"+lei.xlsx")
 
-l<- list()
-for (s in sn) {
-  df <- read.xlsx(fRef, sheet = s)
-  
+wb <- openxlsx::loadWorkbook(fRef)
+
+l <- list()
+
+for (s in seq_along(getSheetNames(fRef))) {
+  df.apu <- read.xlsx(fRef, sheet = s)
+  hasLEI <- df.apu$SIREN %in% dfXml$SIREN
+  # df <- setNames(
+  #   data.frame(hasLEI,rep("",length(hasLEI)),stringsAsFactors=F),
+  #   c("hasLEI","LEI")
+  # )
+  df <- setNames(
+    data.frame(hasLEI,
+               matrix(data="",nrow=nrow(df.apu),ncol=ncol(dfXml)),
+               stringsAsFactors=F),
+    c("hasLEI",names(dfXml))
+  )
+  df[hasLEI,-1] <- dfXml[dfXml$SIREN %in% df.apu$SIREN,]
+  # df[df$hasLEI,]$LEI <- dfXml[dfXml$SIREN %in% df.apu$SIREN,]$LEI
+  l[[length(l)+1]] <- df
+  # l[[length(l)+1]] <- dfXml[dfXml$SIREN %in% df.apu$SIREN,]
+  writeData(wb, s, l[[s]], startCol = 3, startRow = 1)
 }
+
+saveWorkbook(wb, fRef.lei, overwrite = T)
 
 
