@@ -1,11 +1,13 @@
 # dgs/dimos/sbdd/lc
-# 23/06/2017
-
-#options(java.parameters = "-Xmx3072m")
-# library(XLConnect)
+# 25/06/2017
 
 library(xml2)
 library(openxlsx)
+
+Sys.setenv("R_ZIPCMD" = "C:/Rtools/bin/zip.exe")
+
+fRef <- "data/referentiel-adm._centrale-odac-apul-asso-resident-20170328.xlsx"
+fData <- "data/leifrancefullfile20170614t2230-cf2.xml"
 
 fill <- function(s, tag, path) {
  
@@ -26,7 +28,6 @@ fill <- function(s, tag, path) {
   
 }
 
-fData <- "data/leifrancefullfile20170614t2230-cf2.xml"
 data <- read_xml(fData)
 
 path <- "/lei:LEIData/lei:LEIHeader/lei:RecordCount"
@@ -239,7 +240,6 @@ openxlsx::write.xlsx(dfXml, paste0(fData,".xlsx"))
 
 # Get APU:
 
-fRef <- "data/referentiel-adm._centrale-odac-apul-asso-resident-20170328.xlsx"
 fRef.lei <- paste0(regmatches(fRef,regexpr("^.+(?=\\.xlsx$)",fRef,perl=T)),"+lei.xlsx")
 
 wb <- openxlsx::loadWorkbook(fRef)
@@ -248,21 +248,16 @@ l <- list()
 
 for (s in seq_along(getSheetNames(fRef))) {
   df.apu <- read.xlsx(fRef, sheet = s)
-  hasLEI <- df.apu$SIREN %in% dfXml$SIREN
+  # hasLEI <- df.apu$SIREN %in% dfXml$SIREN
   # df <- setNames(
-  #   data.frame(hasLEI,rep("",length(hasLEI)),stringsAsFactors=F),
-  #   c("hasLEI","LEI")
+  #   data.frame(hasLEI,
+  #              matrix(data="",nrow=nrow(df.apu),ncol=ncol(dfXml)),
+  #              stringsAsFactors=F),
+  #   c("hasLEI",names(dfXml))
   # )
-  df <- setNames(
-    data.frame(hasLEI,
-               matrix(data="",nrow=nrow(df.apu),ncol=ncol(dfXml)),
-               stringsAsFactors=F),
-    c("hasLEI",names(dfXml))
-  )
-  df[hasLEI,-1] <- dfXml[dfXml$SIREN %in% df.apu$SIREN,]
-  # df[df$hasLEI,]$LEI <- dfXml[dfXml$SIREN %in% df.apu$SIREN,]$LEI
-  l[[length(l)+1]] <- df
-  # l[[length(l)+1]] <- dfXml[dfXml$SIREN %in% df.apu$SIREN,]
+  # df[hasLEI,-1] <- dfXml[dfXml$SIREN %in% df.apu$SIREN,]
+  df <- merge(x=df.apu,y=dfXml,by="SIREN",all.x=T,all.y=F)
+  l[[length(l)+1]] <- df[,c(-1,-2)]
   writeData(wb, s, l[[s]], startCol = 3, startRow = 1)
 }
 
