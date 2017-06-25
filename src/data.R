@@ -7,15 +7,25 @@ library(openxlsx)
 Sys.setenv("R_ZIPCMD" = "C:/Rtools/bin/zip.exe")
 
 fRef <- "data/referentiel-adm._centrale-odac-apul-asso-resident-20170328.xlsx"
-fData <- "data/leifrancefullfile20170614t2230-cf2.xml"
+fData <- "data/leifrancefullfile20170624t2230-cf2.xml"
+#src: https://lei-france.insee.fr/telechargement
 
-fill <- function(s, tag, path) {
+fill <- function(p) {
+  
+  rm <- regmatches(
+    p,
+    regexec("^(?<parent>.+)\\/(?<node>[a-z,A-Z]+:[a-z,A-Z]+)$",p,perl=T)
+  )[[1]]
+  parent <- rm[2]
+  node <- rm[3]
  
+  s <- xml_text(xml_find_all(data,p))
+  
   if (length(s) != RecordCount) {
-    g <- grepl(tag,as.character(xml_find_all(data,path)))
+    g <- grepl(node,as.character(xml_find_all(data,parent)))
     if (length(g)!=RecordCount) {
       path <- sub("/[a-z,A-Z]+:[a-z,A-Z]+$","",path)
-      g <- grepl(tag,as.character(xml_find_all(data,path)))
+      g <- grepl(node,as.character(xml_find_all(data,path)))
     }
     r <- rep("",length(g))
     r[which(g)]<- s
@@ -34,189 +44,59 @@ path <- "/lei:LEIData/lei:LEIHeader/lei:RecordCount"
 RecordCount <- xml_integer(xml_find_first(data,path))
 
 path <- "/lei:LEIData/lei:LEIRecords/lei:LEIRecord"
-LEI <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:LEI"))),
-  "lei:LEI",
-  path
-)
+LEI <- fill(paste0(path,"/lei:LEI"))
 
 path <- "/lei:LEIData/lei:LEIRecords/lei:LEIRecord/lei:Entity"
-LegalName <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:LegalName"))),
-  "lei:LegalName",
-  path
-)
+LegalName <- fill(paste0(path,"/lei:LegalName"))
 
 path <- "/lei:LEIData/lei:LEIRecords/lei:LEIRecord/lei:Entity/lei:TransliteratedOtherEntityNames"
-TransliteratedOtherEntityName <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:TransliteratedOtherEntityName"))),
-  "lei:TransliteratedOtherEntityName",
-  path
-)
+TransliteratedOtherEntityName <- fill(paste0(path,"/lei:TransliteratedOtherEntityName"))
 
 path <- "/lei:LEIData/lei:LEIRecords/lei:LEIRecord/lei:Entity"
-LegalAddress <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:LegalAddress"))),
-  "lei:LegalAddress",
-  path
-)
+LegalAddress <- fill(paste0(path,"/lei:LegalAddress"))
 
 path <- "/lei:LEIData/lei:LEIRecords/lei:LEIRecord/lei:Entity"
-
-HeadquartersAddress <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:HeadquartersAddress"))),
-  "lei:HeadquartersAddress",
-  path
-)
-
-BusinessRegisterEntityID <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:BusinessRegisterEntityID"))),
-  "lei:BusinessRegisterEntityID",
-  path
-)
-  
-LegalJurisdiction <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:LegalJurisdiction"))),
-  "lei:LegalJurisdiction",
-  path
-)
+HeadquartersAddress <- fill(paste0(path,"/lei:HeadquartersAddress"))
+BusinessRegisterEntityID <- fill(paste0(path,"/lei:BusinessRegisterEntityID"))
+LegalJurisdiction <- fill(paste0(path,"/lei:LegalJurisdiction"))
 
 path <- "/lei:LEIData/lei:LEIRecords/lei:LEIRecord/lei:Entity/lei:LegalForm"
-  
-EntityLegalFormCode <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:EntityLegalFormCode"))),
-  "lei:EntityLegalFormCode",
-  path
-)
-
-OtherLegalForm <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:OtherLegalForm"))),
-  "lei:OtherLegalForm",
-  path
-)
+EntityLegalFormCode <- fill(paste0(path,"/lei:EntityLegalFormCode"))
+OtherLegalForm <- fill(paste0(path,"/lei:OtherLegalForm"))
 
 path <- "/lei:LEIData/lei:LEIRecords/lei:LEIRecord/lei:Entity"
-
-EntityStatus <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:EntityStatus"))),
-  "lei:EntityStatus",
-  path
-)
+EntityStatus <- fill(paste0(path,"/lei:EntityStatus"))
 
 path <- "/lei:LEIData/lei:LEIRecords/lei:LEIRecord/lei:Registration"
-
-InitialRegistrationDate <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:InitialRegistrationDate"))),
-  "lei:InitialRegistrationDate",
-  path
-)
-
-LastUpdateDate <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:LastUpdateDate"))),
-  "lei:LastUpdateDate",
-  path
-)
-
-RegistrationStatus <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:RegistrationStatus"))),
-  "lei:RegistrationStatus",
-  path
-)
-
-NextRenewalDate <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:NextRenewalDate"))),
-  "lei:NextRenewalDate",
-  path
-)
-
-ManagingLOU <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:ManagingLOU"))),
-  "lei:ManagingLOU",
-  path
-)
-
-ValidationSources <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:ValidationSources"))),
-  "lei:ValidationSources",
-  path
-)
+InitialRegistrationDate <- fill(paste0(path,"/lei:InitialRegistrationDate"))
+LastUpdateDate <- fill(paste0(path,"/lei:LastUpdateDate"))
+RegistrationStatus <- fill(paste0(path,"/lei:RegistrationStatus"))
+NextRenewalDate <- fill(paste0(path,"/lei:NextRenewalDate"))
+ManagingLOU <- fill(paste0(path,"/lei:ManagingLOU"))
+ValidationSources <- fill(paste0(path,"/lei:ValidationSources"))
 
 path <- "/lei:LEIData/lei:LEIRecords/lei:LEIRecord/lei:Extension"
-
-SIREN <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/leifr:SIREN"))),
-  "leifr:SIREN",
-  path
-)
-
-LegalFormCodification <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/leifr:LegalFormCodification"))),
-  "leifr:LegalFormCodification",
-  path
-)
+SIREN <- fill(paste0(path,"/leifr:SIREN"))
+LegalFormCodification <- fill(paste0(path,"/leifr:LegalFormCodification"))
 
 path <- paste0(path,"/leifr:EconomicActivity")
-
-NACEClassCode <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/leifr:NACEClassCode"))),
-  "leifr:NACEClassCode",
-  path
-)
-
-SousClasseNAF <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/leifr:SousClasseNAF"))),
-  "leifr:SousClasseNAF",
-  path
-)
+NACEClassCode <- fill(paste0(path,"/leifr:NACEClassCode"))
+SousClasseNAF <- fill(paste0(path,"/leifr:SousClasseNAF"))
 
 path <- "/lei:LEIData/lei:LEIRecords/lei:LEIRecord/lei:Extension"
-
-FundNumber <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/leifr:FundNumber"))),
-  "leifr:FundNumber",
-  path
-)
-
-FundManagerBusinessRegisterID <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/leifr:FundManagerBusinessRegisterID"))),
-  "leifr:FundManagerBusinessRegisterID",
-  path
-)
+FundNumber <- fill(paste0(path,"/leifr:FundNumber"))
+FundManagerBusinessRegisterID <- fill(paste0(path,"/leifr:FundManagerBusinessRegisterID"))
 
 path <- "/lei:LEIData/lei:LEIRecords/lei:LEIRecord/lei:Entity/lei:AssociatedEntity"
-
-AssociatedLEI <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:AssociatedLEI"))),
-  "lei:AssociatedLEI",
-  path
-)
-
-AssociatedEntityName <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:AssociatedEntityName"))),
-  "lei:AssociatedEntityName",
-  path
-)
+AssociatedLEI <- fill(paste0(path,"/lei:AssociatedLEI"))
+AssociatedEntityName <- fill(paste0(path,"/lei:AssociatedEntityName"))
 
 path <- "/lei:LEIData/lei:LEIRecords/lei:LEIRecord/lei:Entity"
-
-EntityExpirationDate <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:EntityExpirationDate"))),
-  "lei:EntityExpirationDate",
-  path
-)
-
-EntityExpirationReason <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:EntityExpirationReason"))),
-  "lei:EntityExpirationReason",
-  path
-)
+EntityExpirationDate <- fill(paste0(path,"/lei:EntityExpirationDate"))
+EntityExpirationReason <- fill(paste0(path,"/lei:EntityExpirationReason"))
 
 path <- "/lei:LEIData/lei:LEIRecords/lei:LEIRecord/lei:Entity/lei:SuccessorEntity"
-SuccessorLEI <- fill(
-  xml_text(xml_find_all(data,paste0(path,"/lei:SuccessorLEI"))),
-  "lei:SuccessorLEI",
-  path
-)
+SuccessorLEI <- fill(paste0(path,"/lei:SuccessorLEI"))
 
 # write XML origin content to Excel file:
 
@@ -249,14 +129,10 @@ l <- list()
 for (s in seq_along(getSheetNames(fRef))) {
   df.apu <- read.xlsx(fRef, sheet = s)
   # hasLEI <- df.apu$SIREN %in% dfXml$SIREN
-  # df <- setNames(
-  #   data.frame(hasLEI,
-  #              matrix(data="",nrow=nrow(df.apu),ncol=ncol(dfXml)),
-  #              stringsAsFactors=F),
-  #   c("hasLEI",names(dfXml))
-  # )
-  # df[hasLEI,-1] <- dfXml[dfXml$SIREN %in% df.apu$SIREN,]
   df <- merge(x=df.apu,y=dfXml,by="SIREN",all.x=T,all.y=F)
+  df$hasLEI <- ifelse(is.na(df$LEI),F,T)
+  df <- df[,c(1:2,ncol(df),4:ncol(df)-1)]
+  df <- setNames(df,sub("hasLEI","?LEI",names(df)))
   l[[length(l)+1]] <- df[,c(-1,-2)]
   writeData(wb, s, l[[s]], startCol = 3, startRow = 1)
 }
